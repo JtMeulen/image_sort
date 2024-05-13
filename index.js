@@ -6,17 +6,35 @@ const IMAGE_FILE_EXTENSIONS = "jpg,jpeg,png,heic,heif";
 
 const DEST_FOLDER = "sorted";
 
+// TODO: add readme
+// TODO: Maybe create new day at midnight 3am (could be considered the same day)
+
 (async () => {
   const images = [];
-  console.log("Starting script to copy images..");
+  // let path_to_images = "";
+  
+  const args = process.argv.slice(2);
 
-  if (fs.existsSync(DEST_FOLDER)) {
+  const pathArg = args.find((arg) => arg.startsWith('--path='))?.split('=')[1];
+  const startDateArg = args.find((arg) => arg.startsWith('--startDate='))?.split('=')[1];
+
+  const path_to_images = pathArg || "";
+  const full_dest_folder = `${path_to_images}/${DEST_FOLDER}`;
+
+  console.log(`Starting script to copy images for path: "${path_to_images}"..`);
+
+  if (!fs.existsSync(path_to_images)) {
+    console.error(`Folder ${path_to_images} does not exist. Exiting..`);
+    process.exit(1);
+  }
+
+  if (fs.existsSync(full_dest_folder)) {
     console.log("Deleting existing folder..");
-    fs.rmdirSync(DEST_FOLDER, { recursive: true });
+    fs.rmdirSync(full_dest_folder, { recursive: true });
   }
 
   console.log("Fetching all files..");
-  const files = await glob(`**/*.{${IMAGE_FILE_EXTENSIONS}}`);
+  const files = await glob(`${path_to_images}/**/*.{${IMAGE_FILE_EXTENSIONS}}`);
 
   console.log("Extracting image dates..");
   for (const file of files) {
@@ -39,10 +57,11 @@ const DEST_FOLDER = "sorted";
   });
 
   console.log("Creating 'sorted' folder..");
-  fs.mkdirSync(DEST_FOLDER);
+  fs.mkdirSync(full_dest_folder);
 
   let currentDay = 1;
-  let currentDate = getFullDate(images[0].date); // TODO: Use user input if provided. Also check if user input is not ahead of first image
+  // If user input is provided we use that
+  let currentDate = startDateArg ? getFullDate(startDateArg) : getFullDate(images[0].date);
 
   console.log("Copying images to 'sorted' folder..");
   for (const image of images) {
@@ -58,15 +77,18 @@ const DEST_FOLDER = "sorted";
       currentDate = getFullDate(imageDate);
     }
 
-    if (!fs.existsSync(`${DEST_FOLDER}/Day ${currentDay}`)) {
+    if (!fs.existsSync(`${full_dest_folder}/Day ${currentDay}`)) {
       console.log(`Creating folder for 'Day ${currentDay}'..`);
-      fs.mkdirSync(`${DEST_FOLDER}/Day ${currentDay}`);
+      fs.mkdirSync(`${full_dest_folder}/Day ${currentDay}`);
     }
 
     // Only use the filename for the image, even if its in a subfolders
     const filename = image.file.split("/").pop();
 
-    fs.copyFileSync(image.file, `${DEST_FOLDER}/Day ${currentDay}/${filename}`);
+    fs.copyFileSync(
+      image.file,
+      `${full_dest_folder}/Day ${currentDay}/${filename}`
+    );
   }
 })();
 
