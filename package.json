@@ -1,0 +1,16 @@
+{
+  "name": "image_sort",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "sort": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "exifreader": "^4.23.1",
+    "glob": "^10.3.15"
+  }
+}
